@@ -136,7 +136,7 @@ byte mercury[8] = {
 // sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
 const byte SAMPLERATE = 7;  // maximum oversample = 7
 // Set time between FIFO data points from 1 to 16328 s (For some reason I get a spurious result for ST_Value = 15) 
-const byte ST_VALUE = 5; // Set auto time step (2^ST_VALUE) seconds for FIFO mode
+const byte ST_VALUE = 2; // Set auto time step (2^ST_VALUE) seconds for FIFO mode
 int AltimeterMode = 0; // use to choose between altimeter and barometer modes for FIFO data
 int deltat = 0;
 int count = 0;
@@ -305,71 +305,70 @@ if(msbT > 0x7F) {
  Serial.print(", Temperature = ,"); Serial.print(temperature, 1); Serial.print(", C,");
  if(AltimeterMode) {Serial.print(" Altitude = ,"); Serial.print(altitude, 1); Serial.println(", m");}
  else {Serial.print(" Pressure = ,"); Serial.print(pressure/1000., 2); Serial.println(", kPa");}
-
  }
- }
+  lcd.clear();
+}
  
 else {
   
     initRealTimeMPL3115A2();  // initialize the accelerometer for realtime data acquisition if communication is OK
-    
-  // Toggle between Active Altimeter Mode and Active Barometer Mode
+
+ // Toggle between Active Altimeter Mode and Active Barometer Mode
+    Clock();
     ActiveAltimeterMode(); 
-//    Serial.println("Active Altimeter Mode");
     readAltitude();  // Read the altitude
     
     Serial.print("altitude is "); Serial.print(altitude, 2);  Serial.print(" m"); // Print altitude in meters
     Serial.print("  temperature is "); Serial.print(temperature, 2); Serial.println(" C"); // Print temperature in C
     
     deltat = millis() - count;
-    if(deltat > 0 & deltat < 1000) { // Display alternating outputs every 500 ms to the LCD
-    Clock(); // get current time
-    lcd.setCursor(0,1); lcd.print((altitude*3.28083989), 0) ; lcd.print(" ft");
+    if(deltat > 0 & deltat < 2000) { // Display alternating outputs every 500 ms to the LCD
+    lcd.setCursor(0,1); lcd.print((altitude*3.28083989), 0) ; lcd.print(" ft   ");
     lcd.setCursor(10,1); lcd.print((temperature*(9./5.) + 32.), 1); lcd.write(4); lcd.print("F");
      }
  
-    if(deltat > 1000 & deltat < 2000) {
-    Clock(); // get current time
-    lcd.setCursor(0,1); lcd.print(altitude, 1); lcd.print(" m");
+    if(deltat > 2000 & deltat < 4000) {
+    lcd.setCursor(0,1); lcd.print(altitude, 1); lcd.print(" m  ");
     lcd.setCursor(10,1); lcd.print(temperature, 1); lcd.write(4); lcd.print("C");
      }   
 
   
-    ActiveBarometerMode(); 
- //   Serial.println("Active Barometer Mode");
-    readPressure();  // Read the pressure
+   Clock();
+   ActiveBarometerMode(); 
+   readPressure();  // Read the pressure
     
-  const int station_elevation_m = 1050.0*0.3048; // Accurate for the roof on my house; convert from feet to meters
+   const int station_elevation_m = 1050.0*0.3048; // Accurate for the roof on my house; convert from feet to meters
 
-  float baroin  = pressure/100; //pressure is now in millibars
+   float baroin  = pressure/100; //pressure is now in millibars
 
-  // Formula to correct absolute pressure in millbars to "altimeter pressure" in inches of mercury 
-  // comparable to weather report pressure
-  float part1 = baroin - 0.3; //Part 1 of formula
-  const float part2 = 8.42288 / 100000.0;
-  float part3 = pow((baroin - 0.3), 0.190284);
-  float part4 = (float)station_elevation_m / part3;
-  float part5 = (1.0 + (part2 * part4));
-  float part6 = pow(part5, (1.0/0.190284));
-  float altimeter_setting_pressure_mb = part1 * part6; //Output is now in adjusted millibars
-  baroin = altimeter_setting_pressure_mb * 0.02953;
+   // Formula to correct absolute pressure in millbars to "altimeter pressure" in inches of mercury 
+   // comparable to weather report pressure
+   float part1 = baroin - 0.3; //Part 1 of formula
+//   const float part2 = 8.42288 / 100000.0;
+   const float part2 = 0.0000842288;
+//   float part3 = pow((baroin - 0.3), 0.190284);
+   float part3 = pow(part1, 0.190284);
+   float part4 = (float)station_elevation_m / part3;
+   float part5 = (1.0 + (part2 * part4));
+//   float part6 = pow(part5, (1.0/0.190284));
+   float part6 = pow(part5, 5.2553026);
+   float altimeter_setting_pressure_mb = part1 * part6; //Output is now in adjusted millibars
+   baroin = altimeter_setting_pressure_mb * 0.02953;
   
    Serial.print("pressure is "); Serial.print(pressure, 2); Serial.print(" Pa");  // Print altitude in meters
-   Serial.print("  temperature is "); Serial.print(temperature, 2);  Serial.println(" C"); // Print altitude in meters
+   Serial.print("  temperature is "); Serial.print(temperature, 2);  Serial.println(" C"); // Print temperature in C
     
-   if (deltat > 2000 & deltat < 3000) {   
-   Clock(); // get current time
-   lcd.setCursor(0,1); lcd.print((pressure/1000.), 2); lcd.print(" kPa");
-   lcd.setCursor(10,1); lcd.print(temperature, 1); lcd.write(4); lcd.print("C");
+   if (deltat > 4000 & deltat < 6000) {   
+   lcd.setCursor(0,1); lcd.print((pressure/1000.), 2); lcd.print(" kPa  ");
+   lcd.setCursor(10,1); lcd.print(temperature,1); lcd.write(4); lcd.print("C");
     }  
    
-   if(deltat > 3000 & deltat < 4000) {  
-   Clock(); // get current time
+   if(deltat > 6000 & deltat < 8000) {  
    lcd.setCursor(0,1); lcd.print(baroin, 2) ; lcd.print(" in"); lcd.write(5);
    lcd.setCursor(10,1); lcd.print((temperature*(9./5.) + 32.), 1); lcd.write(4); lcd.print("F");
     }  
 
-   if(deltat > 4000) {count = millis();} // Reset display counter
+   if(deltat > 8000) {count = millis();} // Reset display counter
 
 }
 }
@@ -531,8 +530,10 @@ void initFIFOMPL3115A2()
   
   // Set FIFO mode
   writeRegister(F_SETUP, 0x00); // Clear FIFO mode
-//  writeRegister(F_SETUP, 0x80); // Set F_MODE to interrupt when overflow = 32 reached
-  writeRegister(F_SETUP, 0x60); // Set F_MODE to accept 32 data samples and interrupt when watermark = 32 reached
+// In overflow mode, when FIFO fills up, no more data is taken until the FIFO registers are read
+// In watermark mode, the oldest data is overwritten by new data until the FIFO registers are read
+writeRegister(F_SETUP, 0x80); // Set F_MODE to interrupt when overflow = 32 reached
+//  writeRegister(F_SETUP, 0x60); // Set F_MODE to accept 32 data samples and interrupt when watermark = 32 reached
 
   MPL3115A2Active();  // Set to active to start reading
 }
@@ -728,7 +729,7 @@ void writeRegister(unsigned char address, unsigned char data)
 void Clock()
 {
   //this function prints the current time
-  lcd.clear(); // start by clearing the LCD
+//  lcd.clear(); // start by clearing the LCD
 
   // Initialize clock
 
@@ -739,8 +740,8 @@ void Clock()
   unsigned long hours   = 0;
   // Define variables to set initial values for seconds, minutes, and hours 
   unsigned long setseconds = 30; // set clock seconds 
-  unsigned long setminutes = 20; // set clock minutes
-  unsigned long sethours = 2; // set clock hours
+  unsigned long setminutes = 3; // set clock minutes
+  unsigned long sethours = 5; // set clock hours
   // Define variables to set alarm values for seconds, minutes, and hours 
   unsigned long tseconds = 0; // set clock seconds 
   unsigned long tminutes = 0; // set clock minutes
