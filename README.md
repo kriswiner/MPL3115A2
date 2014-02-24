@@ -10,3 +10,5 @@ Sketch for the MMA3115A2 Altimeter/Barometer
  
  In addition, provision for the FIFO mode in the initialization, watermark/overflow setting, and register
  read functions for autonomous data logging over as many as nine hours with 32 data samples of P, T.
+ 
+ Run on an ATMEGA 3.3V Pro Mini with LCD display.
