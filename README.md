@@ -1,7 +1,7 @@
 MPL3115A2
 =========
 
-Sketch for the MMA3115A2 Altimeter/Barometer
+Sketch for the MPL3115A2 Altimeter/Barometer
 
  IDE example usage for most features of the MPL3115A2 I2C Precision Altimeter.
  
